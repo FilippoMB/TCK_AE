@@ -7,19 +7,19 @@ import matplotlib.pyplot as plt
 from utils import classify_with_knn, interp_data, mse_and_corr, dim_reduction_plot
 import math
 
-dim_red = 1
+dim_red = 0
 plot_on = 1
 interp_on = 0
 tied_weights = 0
-lin_dec = 0
+lin_dec = 1
 
 # parse input data
 parser = argparse.ArgumentParser()
 parser.add_argument("--code_size", default=20, help="size of the code", type=int)
-parser.add_argument("--w_reg", default=0.0, help="weight of the regularization in the loss function", type=float)
-parser.add_argument("--a_reg", default=0.5, help="weight of the kernel alignment", type=float)
-parser.add_argument("--num_epochs", default=1000, help="number of epochs in training", type=int)
-parser.add_argument("--batch_size", default=50, help="number of samples in each batch", type=int)
+parser.add_argument("--w_reg", default=0.001, help="weight of the regularization in the loss function", type=float)
+parser.add_argument("--a_reg", default=0.1, help="weight of the kernel alignment", type=float)
+parser.add_argument("--num_epochs", default=5000, help="number of epochs in training", type=int)
+parser.add_argument("--batch_size", default=25, help="number of samples in each batch", type=int)
 parser.add_argument("--max_gradient_norm", default=1.0, help="max gradient norm for gradient clipping", type=float)
 parser.add_argument("--learning_rate", default=0.001, help="Adam initial learning rate", type=float)
 parser.add_argument("--hidden_size", default=30, help="size of the code", type=int)
@@ -29,7 +29,7 @@ print(args)
 # ================= DATASET =================
 (train_data, train_labels, train_len, _, K_tr,
         valid_data, _, valid_len, _, K_vs,
-        test_data_orig, test_labels, test_len, _, K_ts) = getBlood(kernel='ideal', inp='last') # data shape is [T, N, V] = [time_steps, num_elements, num_var]
+        test_data_orig, test_labels, test_len, _, K_ts) = getBlood(kernel='ideal', inp='zero') # data shape is [T, N, V] = [time_steps, num_elements, num_var]
 
 # sort test data (for visualize the learned K)
 sort_idx = np.argsort(test_labels,axis=0)[:,0]
@@ -56,10 +56,8 @@ test_data = np.reshape(test_data, (test_data.shape[0], test_data.shape[1]*test_d
 
 print('\n**** Processing Blood data: Tr{}, Vs{}, Ts{} ****\n'.format(train_data.shape, valid_data.shape, test_data.shape))
 
-plt.matshow(K_vs,cmap='binary_r')
-plt.show()
-
 input_length = train_data.shape[1] # same for all inputs
+
 # ================= GRAPH =================
 
 # init session
@@ -152,6 +150,7 @@ batch_size = args.batch_size
 time_tr_start = time.time()
 max_batches = train_data.shape[0]//batch_size
 loss_track = []
+kloss_track = []
 min_vs_loss = np.infty
 model_name = "/tmp/tkae_models/m_"+str(time.strftime("%Y%m%d-%H%M%S"))+".ckpt"
 #train_writer = tf.summary.FileWriter('/tmp/tensorboard', graph=sess.graph)
@@ -160,28 +159,31 @@ saver = tf.train.Saver()
 try:
     for ep in range(args.num_epochs):
         
-#        # shuffle training data
-#        idx = np.random.permutation(train_data.shape[0])
-#        train_data_s = train_data[idx,:] 
-#        K_tr = K_tr[idx,:][:,idx]
+        # shuffle training data
+        idx = np.random.permutation(train_data.shape[0])
+        train_data_s = train_data[idx,:] 
+        K_tr_s = K_tr[idx,:][:,idx]
         
         for batch in range(max_batches):
             
-            fdtr = {encoder_inputs: train_data[(batch)*batch_size:(batch+1)*batch_size,:],
-                    prior_K: K_tr[(batch)*batch_size:(batch+1)*batch_size, (batch)*batch_size:(batch+1)*batch_size]}           
-            _,train_loss = sess.run([update_step, reconstruct_loss], fdtr)    
+            fdtr = {encoder_inputs: train_data_s[(batch)*batch_size:(batch+1)*batch_size,:],
+                    prior_K: K_tr_s[(batch)*batch_size:(batch+1)*batch_size, (batch)*batch_size:(batch+1)*batch_size]
+                    }           
+            _,train_loss, train_kloss = sess.run([update_step, reconstruct_loss, k_loss], fdtr)    
             loss_track.append(train_loss)
+            kloss_track.append(train_kloss)
             
-        # check training progress on the validations set    
+        # check training progress on the validations set (in blood data valid=train) 
         if ep % 100 == 0:            
             print('Ep: {}'.format(ep))
             
-            fdvs = {encoder_inputs: valid_data}
-            outvs, lossvs, vs_code_K = sess.run([dec_out, reconstruct_loss, code_K], fdvs) #summary, merged_summary
-            plt.matshow(vs_code_K,cmap='binary_r')
-            plt.show()
+            fdvs = {encoder_inputs: valid_data,
+                    prior_K: K_vs}
+            outvs, lossvs, klossvs, vs_code_K = sess.run([dec_out, reconstruct_loss, k_loss, code_K], fdvs) #summary, merged_summary
+#            plt.matshow(vs_code_K,cmap='binary_r')
+#            plt.show()
             #train_writer.add_summary(summary, ep)
-            print('VS loss=%.3f -- TR min_loss=.%3f'%(lossvs, np.min(loss_track)))     
+            print('VS r_loss=%.3f, k_loss=%.3f -- TR r_loss=%.3f, k_loss=%.3f'%(lossvs, klossvs, np.mean(loss_track[-100:]), np.mean(kloss_track[-100:])))     
             
             # Save model yielding best results on validation
             if lossvs < min_vs_loss:
@@ -195,7 +197,7 @@ except KeyboardInterrupt:
     print('training interrupted')
 
 #if plot_on:
-#    plt.plot(loss_track, label='loss_track')
+#    plt.plot(kloss_track, label='kloss_track')
 #    plt.legend(loc='upper right')
 #    plt.show(block=False)
     
@@ -239,6 +241,8 @@ if plot_on:
     plt.gca().axes.get_yaxis().set_ticks([])
     plt.show()
     
+    plt.matshow(K_ts,cmap='binary_r')
+    plt.show()
     plt.matshow(ts_code_K,cmap='binary_r')
     plt.show()
 
@@ -247,8 +251,8 @@ test_mse, test_corr = mse_and_corr(test_data, pred, test_len)
 print('Test MSE: %.3f\nTest Pearson correlation: %.3f'%(test_mse, test_corr))
 
 # kNN classification on the codes
-acc = classify_with_knn(tr_code, train_labels[:, 0], ts_code, test_labels[:, 0])
-print('kNN acc: {}'.format(acc))
+acc, f1, auc = classify_with_knn(tr_code, train_labels[:, 0], ts_code, test_labels[:, 0], k=3)
+print('kNN -- acc: %.3f, F1: %.3f, AUC: %.3f'%(acc, f1, auc))
 
 # dim reduction plots
 if dim_red:

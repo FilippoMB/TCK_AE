@@ -68,43 +68,21 @@ def interp_data(X, X_len, restore=False, interp_kind='linear'):
     return X_new
 
 
-def classify_with_knn(train_data, train_labels, val_data, val_labels, min_k=3, max_k=4, step_k=1, plot_results=False):
+def classify_with_knn(train_data, train_labels, test_data, test_labels, k=3):
     """
-    Perform classification with knn by trying multiple k values.
-    This function plots
-    :param train_data:
-    :param train_labels:
-    :param val_data:
-    :param val_labels:
-    :param min_k:
-    :param max_k:
-    :param step_k:
-    :param plot_results: Boolean indicating whether the function should plot the results
-    :param return_results: If True, return a pair of k values and related classification accuracy,
-        otherwise, the function returns None
-    :return:
+    Perform classification with knn.
     """
-
     from sklearn.neighbors import KNeighborsClassifier
+    from sklearn.metrics import f1_score, roc_auc_score
 
-    k_values = []
-    knn_acc = []
-    for k in range(min_k, max_k, step_k):
-        k_values.append(k)
-        neigh = KNeighborsClassifier(n_neighbors=k)
-        neigh.fit(train_data, train_labels)
-        accuracy = neigh.score(val_data, val_labels)
-        knn_acc.append(accuracy)
+    neigh = KNeighborsClassifier(n_neighbors=k)
+    neigh.fit(train_data, train_labels)
+    accuracy = neigh.score(test_data, test_labels)
+    pred_labels = neigh.predict(test_data)
+    F1 = f1_score(test_labels, pred_labels)
+    AUC = roc_auc_score(test_labels, pred_labels)
 
-    if plot_results:
-        import matplotlib.pyplot as plt
-
-        plt.plot(k_values, knn_acc)
-        plt.xlabel("K")
-        plt.ylabel("Accuracy")
-        plt.show()
-
-    return k_values, knn_acc
+    return accuracy, F1, AUC
 
 def mse_and_corr(targets, preds, targets_len):
     """
