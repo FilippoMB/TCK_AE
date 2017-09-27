@@ -1,5 +1,6 @@
 % load data
-[ X, Y, Xte, Yte ] = get_BloodData(1,0.8);
+%[ X, Y, Xte, Yte ] = get_BloodData(1,0.8);
+[ X, Y, Xte, Yte ] = get_BloodData2(1);
 
 %% Train GMM models
 [GMMpar,C,G]  = trainTCK(X);
@@ -14,7 +15,7 @@ Ktrte = TCK(GMMpar,C,G,'tr-te',Xte);
 Ktete = TCK(GMMpar,C,G,'te-te',Xte);
 
 %% kNN -classifier
-[acc, Ypred] = myKNN(Ktrte,Y,Yte,1);
+[acc, Ypred] = myKNN(Ktrte,Y,Yte,3);
 [accuracy, sensitivity, specificity, precision, recall, f_measure, gmean] = confusion_stats(Yte,Ypred);
 disp(['acc: ',num2str(acc),', f1: ',num2str(f_measure)])
 
