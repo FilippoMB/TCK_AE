@@ -25,7 +25,7 @@ function [ res, C, G ] = trainTCK( X, varargin )
 
 %
 % Reference: "Time Series Cluster Kernel for Learning Similarities between Multivariate Time Series with Missing Data", 2017 Pattern Recognition, Elsevier.
-% Authors: "Karl �yvind Mikalsen, Filippo Maria Bianchi"
+% Authors: "Karl Oyvind Mikalsen, Filippo Maria Bianchi"
 
 N = size(X,1); % number of time series
 T = size(X,2); % time steps in each time series

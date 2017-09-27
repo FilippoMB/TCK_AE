@@ -17,7 +17,7 @@ lin_dec = 1
 parser = argparse.ArgumentParser()
 parser.add_argument("--code_size", default=20, help="size of the code", type=int)
 parser.add_argument("--w_reg", default=0.001, help="weight of the regularization in the loss function", type=float)
-parser.add_argument("--a_reg", default=0.1, help="weight of the kernel alignment", type=float)
+parser.add_argument("--a_reg", default=0.2, help="weight of the kernel alignment", type=float)
 parser.add_argument("--num_epochs", default=5000, help="number of epochs in training", type=int)
 parser.add_argument("--batch_size", default=25, help="number of samples in each batch", type=int)
 parser.add_argument("--max_gradient_norm", default=1.0, help="max gradient norm for gradient clipping", type=float)
@@ -29,7 +29,7 @@ print(args)
 # ================= DATASET =================
 (train_data, train_labels, train_len, _, K_tr,
         valid_data, _, valid_len, _, K_vs,
-        test_data_orig, test_labels, test_len, _, K_ts) = getBlood(kernel='ideal', inp='zero') # data shape is [T, N, V] = [time_steps, num_elements, num_var]
+        test_data_orig, test_labels, test_len, _, K_ts) = getBlood(kernel='TCK', inp='zero') # data shape is [T, N, V] = [time_steps, num_elements, num_var]
 
 # sort test data (for visualize the learned K)
 sort_idx = np.argsort(test_labels,axis=0)[:,0]

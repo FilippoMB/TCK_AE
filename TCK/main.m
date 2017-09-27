@@ -1,5 +1,5 @@
 % load data
-[ X, Y, Xte, Yte ] = get_BloodData(0);
+[ X, Y, Xte, Yte ] = get_BloodData(1,0.8);
 
 %% Train GMM models
 [GMMpar,C,G]  = trainTCK(X);
@@ -14,7 +14,9 @@ Ktrte = TCK(GMMpar,C,G,'tr-te',Xte);
 Ktete = TCK(GMMpar,C,G,'te-te',Xte);
 
 %% kNN -classifier
-accuracy=myKNN(Ktrte,Y,Yte,9)
+[acc, Ypred] = myKNN(Ktrte,Y,Yte,1);
+[accuracy, sensitivity, specificity, precision, recall, f_measure, gmean] = confusion_stats(Yte,Ypred);
+disp(['acc: ',num2str(acc),', f1: ',num2str(f_measure)])
 
 %% visualization
 close all
@@ -30,8 +32,10 @@ set(gca,'ytick',[])
 box on
 title('PCA TCK')
 
+[~,idx] = sort(Yte);
+Ksort = Ktete(idx,idx);
 figure
-imagesc(Ktete)
+imagesc(Ksort)
 colormap('gray')
 set(gca,'xtick',[])
 set(gca,'ytick',[])

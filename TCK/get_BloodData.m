@@ -1,4 +1,4 @@
-function [ X, Y, Xte, Yte ] = get_BloodData(data_norm)
+function [ X, Y, Xte, Yte ] = get_BloodData(data_norm, tr_ratio)
 %GET_BLOODDATA Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -7,7 +7,8 @@ Xall = Xall.X;
 Yall = load('..\Data\Y_all.mat');
 Yall = Yall.Y;
 
-[N,T,V] = size(Xall);
+[N,~,V] = size(Xall);
+tr_size = round(N*tr_ratio);
 
 if data_norm
     for v=1:V
@@ -19,9 +20,9 @@ if data_norm
     end
 end
 
-X = Xall(1:719,:,:);
-Xte = Xall(720:end,:,:);
-Y = Yall(1:719,:,:);
-Yte = Yall(720:end,:,:);
+X = Xall(1:tr_size,:,:);
+Xte = Xall(tr_size+1:end,:,:);
+Y = Yall(1:tr_size,:,:);
+Yte = Yall(tr_size+1:end,:,:);
 end
 

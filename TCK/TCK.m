@@ -16,16 +16,8 @@ function [ K ] = TCK(GMM, C, G, mode, Xte)
 
 %
 % Reference: "Time Series Cluster Kernel for Learning Similarities between Multivariate Time Series with Missing Data", 2017 Pattern Recognition, Elsevier.
-% Authors: "Karl Øyvind Mikalsen, Filippo Maria Bianchi"
+% Authors: "Karl Oyvind Mikalsen, Filippo Maria Bianchi"
 
-% switch nargin
-%     case 4
-%         in = 0;
-%     case 3
-%         in = 1;
-%     otherwise
-%         error('GMM, C and G must be given as inputs');
-% end
 
 if strcmp(mode, 'tr-te')
      
@@ -40,7 +32,7 @@ if strcmp(mode, 'tr-te')
     K = zeros(size(GMM{1,1},1),size(Xte,1));
     parfor i=1:G*(C-1)
         c= floor((i-1)/G) + 2;
-        K = K + GMM{i,1}*GMMposterior( Xte, c, GMM{i,2}, GMM{i,3}, GMM{i,4}, GMM{i,5}, GMM{i,6}, missing )';
+        K = K + normr(GMM{i,1})*normr(GMMposterior( Xte, c, GMM{i,2}, GMM{i,3}, GMM{i,4}, GMM{i,5}, GMM{i,6}, missing ))';
     end
     
 elseif strcmp(mode, 'te-te')
@@ -56,14 +48,14 @@ elseif strcmp(mode, 'te-te')
     K = zeros(size(Xte,1));
     parfor i=1:G*(C-1)
         c = floor((i-1)/G) + 2;
-        K = K + GMMposterior(Xte,c,GMM{i,2},GMM{i,3},GMM{i,4},GMM{i,5},GMM{i,6},missing) * GMMposterior(Xte,c,GMM{i,2},GMM{i,3},GMM{i,4},GMM{i,5},GMM{i,6},missing)';
+        K = K + normr(GMMposterior(Xte,c,GMM{i,2},GMM{i,3},GMM{i,4},GMM{i,5},GMM{i,6},missing)) * normr(GMMposterior(Xte,c,GMM{i,2},GMM{i,3},GMM{i,4},GMM{i,5},GMM{i,6},missing))';
     end
     
 elseif strcmp(mode, 'tr-tr')  %in-sample kernel matrix
     
     K = zeros(size(GMM{1,1},1),size(GMM{1,1},1));
     parfor i=1:G*(C-1)
-        K = K + GMM{i,1}*GMM{i,1}';
+        K = K + normr(GMM{i,1})*normr(GMM{i,1})';
     end
     
 else
