@@ -29,7 +29,7 @@ print(args)
 # ================= DATASET =================
 (train_data, train_labels, train_len, _, K_tr,
         valid_data, _, valid_len, _, K_vs,
-        test_data_orig, test_labels, test_len, _, K_ts) = getBlood(kernel='ideal', inp='zero') # data shape is [T, N, V] = [time_steps, num_elements, num_var]
+        test_data_orig, test_labels, test_len, _, K_ts) = getBlood(kernel='TCK', inp='mean') # data shape is [T, N, V] = [time_steps, num_elements, num_var]
 
 # sort test data (for visualize the learned K)
 sort_idx = np.argsort(test_labels,axis=0)[:,0]

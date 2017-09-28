@@ -15,7 +15,7 @@ Ktrte = TCK(GMMpar,C,G,'tr-te',Xte);
 Ktete = TCK(GMMpar,C,G,'te-te',Xte);
 
 %% kNN -classifier
-[acc, Ypred] = myKNN(Ktrte,Y,Yte,3);
+[acc, Ypred] = myKNN(Ktrte,Y,Yte,1);
 [accuracy, sensitivity, specificity, precision, recall, f_measure, gmean] = confusion_stats(Yte,Ypred);
 disp(['acc: ',num2str(acc),', f1: ',num2str(f_measure)])
 
