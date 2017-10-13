@@ -1,28 +1,32 @@
-function [ X, Y, Xte, Yte ] = get_BloodData(data_norm, tr_ratio)
-%GET_BLOODDATA Summary of this function goes here
-%   Detailed explanation goes here
+function [ X, Y, Xte, Yte ] = get_BloodData(data_norm)
 
-Xall = load('..\Data\X_all.mat');
-Xall = Xall.X;
-Yall = load('..\Data\Y_all.mat');
-Yall = Yall.Y;
+x_tr = load('../Data/x.mat');
+y_tr = load('../Data/Y.mat');
+x_te = load('../Data/xte.mat');
+y_te = load('../Data/Yte.mat');
 
-[N,~,V] = size(Xall);
-tr_size = round(N*tr_ratio);
+Ntr = size(x_tr.x,1);
+Nts = size(x_te.xte,1);
+T = 20;
+V = 10;
+
+X = reshape(x_tr.x,[Ntr,T,V]);
+Xte = reshape(x_te.xte,[Nts,T,V]);
+Y = y_tr.Y;
+Yte = y_te.Yte;
 
 if data_norm
     for v=1:V
-       Xv = Xall(:,:,v);
-       Xv_m = nanmean(Xv(:));
-       Xv_s = nanstd(Xv(:));
-       Xv = (Xv - Xv_m)/Xv_s;
-       Xall(:,:,v) = Xv;
+       X_v = X(:,:,v);
+       Xte_v = Xte(:,:,v);
+       Xv_m = nanmean(X_v(:));
+       Xv_s = nanstd(X_v(:));
+       
+       X_v = (X_v - Xv_m)/Xv_s;
+       X(:,:,v) = X_v;
+       Xte_v = (Xte_v - Xv_m)/Xv_s;
+       Xte(:,:,v) = Xte_v;
     end
 end
 
-X = Xall(1:tr_size,:,:);
-Xte = Xall(tr_size+1:end,:,:);
-Y = Yall(1:tr_size,:,:);
-Yte = Yall(tr_size+1:end,:,:);
 end
-
