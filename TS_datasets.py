@@ -1,13 +1,10 @@
 import numpy as np
-from scipy.integrate import odeint
 import scipy.io
-from sklearn import preprocessing
-import sys
 from utils import ideal_kernel
 import pandas as pd
 
 """
-Data manager for different time series datasets.
+Data manager for loading blood data and (precomputed) TCK kernel
 """
 
 

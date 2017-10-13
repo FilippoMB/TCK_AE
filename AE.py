@@ -1,5 +1,5 @@
 import tensorflow as tf
-import argparse, sys
+import argparse
 from TS_datasets import getBlood
 import time
 import numpy as np
@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from utils import classify_with_knn, interp_data, mse_and_corr, dim_reduction_plot
 import math
 
-dim_red = 0
+dim_red = 1
 plot_on = 1
 interp_on = 0
 tied_weights = 0
@@ -29,7 +29,7 @@ print(args)
 # ================= DATASET =================
 (train_data, train_labels, train_len, _, K_tr,
         valid_data, _, valid_len, _, K_vs,
-        test_data_orig, test_labels, test_len, _, K_ts) = getBlood(kernel='TCK', inp='mean') # data shape is [T, N, V] = [time_steps, num_elements, num_var]
+        test_data_orig, test_labels, test_len, _, K_ts) = getBlood(kernel='TCK', inp='zero') # data shape is [T, N, V] = [time_steps, num_elements, num_var]
 
 # sort test data (for visualize the learned K)
 sort_idx = np.argsort(test_labels,axis=0)[:,0]
@@ -138,6 +138,7 @@ print('Total parameters: {}'.format(total_parameters))
 mean_grads = tf.reduce_mean([tf.reduce_mean(grad) for grad in gradients])
 tf.summary.scalar('mean_grads', mean_grads)
 tf.summary.scalar('reconstruct_loss', reconstruct_loss)
+tf.summary.scalar('k_loss', k_loss)
 tvars = tf.trainable_variables()
 for tvar in tvars:
     tf.summary.histogram(tvar.name.replace(':','_'), tvar)
@@ -145,15 +146,15 @@ merged_summary = tf.summary.merge_all()
 
 # ================= TRAINING =================
 
-# initialize training stuff
-batch_size = args.batch_size
+# initialize training variables
 time_tr_start = time.time()
+batch_size = args.batch_size
 max_batches = train_data.shape[0]//batch_size
 loss_track = []
 kloss_track = []
 min_vs_loss = np.infty
-model_name = "/tmp/tkae_models/m_"+str(time.strftime("%Y%m%d-%H%M%S"))+".ckpt"
-#train_writer = tf.summary.FileWriter('/tmp/tensorboard', graph=sess.graph)
+model_name = "/tmp/dkae_models/m_0.ckpt"
+train_writer = tf.summary.FileWriter('/tmp/tensorboard', graph=sess.graph)
 saver = tf.train.Saver()
 
 try:
@@ -179,10 +180,8 @@ try:
             
             fdvs = {encoder_inputs: valid_data,
                     prior_K: K_vs}
-            outvs, lossvs, klossvs, vs_code_K = sess.run([dec_out, reconstruct_loss, k_loss, code_K], fdvs) #summary, merged_summary
-#            plt.matshow(vs_code_K,cmap='binary_r')
-#            plt.show()
-            #train_writer.add_summary(summary, ep)
+            outvs, lossvs, klossvs, vs_code_K, summary = sess.run([dec_out, reconstruct_loss, k_loss, code_K, merged_summary], fdvs)
+            train_writer.add_summary(summary, ep)
             print('VS r_loss=%.3f, k_loss=%.3f -- TR r_loss=%.3f, k_loss=%.3f'%(lossvs, klossvs, np.mean(loss_track[-100:]), np.mean(kloss_track[-100:])))     
             
             # Save model yielding best results on validation
@@ -196,11 +195,7 @@ try:
 except KeyboardInterrupt:
     print('training interrupted')
 
-#if plot_on:
-#    plt.plot(kloss_track, label='kloss_track')
-#    plt.legend(loc='upper right')
-#    plt.show(block=False)
-    
+   
 time_tr_end = time.time()
 print('Tot training time: {}'.format((time_tr_end-time_tr_start)//60) )
 
@@ -226,24 +221,26 @@ if np.min(train_len) < np.max(train_len) and interp_on:
 if plot_on:
     
     # plot the reconstruction of a random time series
-    plot_idx1 = np.random.randint(low=0,high=test_data.shape[0])
-    target = test_data[:,plot_idx1,0]
-    ts_out = pred[:,plot_idx1,0]
+    plot_idx1 = np.random.randint(low=0,high=test_data.shape[1])
+    plot_idx2 = np.random.randint(low=0,high=test_data.shape[2])
+    target = test_data[:,plot_idx1,plot_idx2]
+    ts_out = pred[:,plot_idx1,plot_idx2]
     plt.plot(target, label='target')
     plt.plot(ts_out, label='pred')
-    plt.legend(loc='upper right')
+    plt.legend(loc='best')
+    plt.title('Prediction of a random MTS variable')
     plt.show(block=True)  
     np.savetxt('AE_pred',ts_out)
-    
-    # plot the first 2 components of the code
-    plt.scatter(ts_code[:,0],ts_code[:,1],c=test_labels, s=80,marker='.',linewidths = 0,cmap='Paired')
+        
+    plt.matshow(K_ts,cmap='binary_r')
+    plt.title('Prior TCK kernel')
     plt.gca().axes.get_xaxis().set_ticks([])
     plt.gca().axes.get_yaxis().set_ticks([])
     plt.show()
-    
-    plt.matshow(K_ts,cmap='binary_r')
-    plt.show()
     plt.matshow(ts_code_K,cmap='binary_r')
+    plt.title('Codes inner products')
+    plt.gca().axes.get_xaxis().set_ticks([])
+    plt.gca().axes.get_yaxis().set_ticks([])
     plt.show()
 
 # MSE and corr
