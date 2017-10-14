@@ -24,17 +24,19 @@ The dataset is in the folder [Data/](https://github.com/FilippoMB/TCK_AE/tree/ma
 #### Train TCK (MATLAB)
 
 Run the matlab script [TCK/main.m](https://github.com/FilippoMB/TCK_AE/blob/master/TCK/main.m) to compute TCK on the blood data. 
-TCK is first trained on the training data in `x.mat` and then used to classify the test data in `xte.mat` using a *k*NN classifier, with *k*=1. For example, we get the following classification results on the test:
+The computed kernel **K** can be divided in 4 parts: *K_trtr*, the similarities among the elements of the training set, *K_tete*, the similarities among elements of the test set, *K_trte* and *K_tetr*, the similarities between elements of the training set and test set. 
+
+TCK is first trained on the training data in `x.mat` and then used to classify the test data in `xte.mat`.
+The classification is done on *K_trte* or *K_tetr* using a *k*NN classifier, with *k*=1. For example, we get the following classification results on the test:
 
 ```matlab
 ACC: 0.86932, F1: 0.7013, AUC: 0.77809
 ```
-The computed kernel **K** can be divided in 3 parts: *K_trtr*, the similarities among the elements of the training set, *K_tete*, the similarities among elements of the test set, *K_trte* the similarities between elements of the training set and test set. A visualization of *K_tete* is returned.
-
+A visualization of *K_tete* is also returned.
 <img src="./imgs/tck_kernel.png" width="200" height="200">
 
 We can see that the matrix has a block structure: the first larger block on the diagonal are the similarities between MTS of class 1, the second smaller block is relative to the elements of class 2.
-Results are saved in [/Data/TCK_data.mat](https://github.com/FilippoMB/TCK_AE/blob/master/Data/TCK_data.mat).
+Results are saved in [/Data/TCK_data.mat](https://github.com/FilippoMB/TCK_AE/blob/master/Data/TCK_data.mat) and they are used in the next section to train the dkAE.
 
 ------
 #### Train the dkAE with TCK (Python)
@@ -47,7 +49,7 @@ The dkAE depends on a set of hyperparameters, whose value used in this experimen
 * `batch_size`: size of the mini batches used during training (value=25);
 * `max_gradient_norm`: maximum value that gradients are allowed to assume. Values larger than that are clipped (value=1.0);
 * `learning_rate`: initial learning rate in the Adam algorithm, used in the gradient descent training procedure (value=0.001);
-* `hidden_size` size on the second hidden layer of the encoder and first hidden layer of the decoder (value=30)
+* `hidden_size` size on the second hidden layer of the encoder and first hidden layer of the decoder (value=30).
 
 The configuration (in terms of procesing units in each layer) of the AE used in the experiments is [200, 30, 20, 30, 200].
 
@@ -71,7 +73,8 @@ lin_dec = 1
 * `tied_weights`: encoder and decoder have tied weights (not used);
 * `lin_dec`: the decoder has only linear activations rather than squashing nonlinearities.
 
-During the training, the reconstruction loss and the code loss can be visualized in [Tensorboard](https://www.tensorflow.org/get_started/summaries_and_tensorboard). The *reconstruction loss* is the MSE error between encoder input and its reconstruction performed by the decoder, while *code loss* is the Frobenious norm of the difference between the prior TCK kernel and the inner products of the codes.
+During the training, the reconstruction loss and the code loss can be visualized in [Tensorboard](https://www.tensorflow.org/get_started/summaries_and_tensorboard). 
+The *reconstruction loss* is the MSE error between encoder input and its reconstruction performed by the decoder, while *code loss* is the Frobenious norm of the difference between the prior TCK kernel and the inner products of the codes.
 
 <img src="./imgs/Selection_003.jpg">
 <img src="./imgs/Selection_002.jpg">
@@ -80,7 +83,7 @@ During the training, the reconstruction loss and the code loss can be visualized
 #### Learned codes representations of test set and classification
 
 Once the training procedure is over, the dkAE is fed with the MTS of the test set and the relative codes are generated.
-The inner products of the codes is visualized and we can notice that the structure resemble the one of the prior TCK, shown previously, where the two classes in the test set can be clearly recognized
+The inner products of the codes is visualized and we can notice that the structure resemble the one of the prior TCK shown previously (here we focus on the test part *K_tete*), where the two classes in the test set can be clearly recognized
 
 <img src="./imgs/learned code.png" width="200" height="200">
 
