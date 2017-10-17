@@ -13,8 +13,8 @@ def dim_reduction_plot(data, label, block_flag):
     data_PCA = PCA_model.transform(data)
     idxc1 = np.where(label==0)
     idxc2 = np.where(label==1)
-    plt.scatter(data_PCA[idxc1,0],data_PCA[idxc1,1],s=80,c='r', marker='^',linewidths = 0, label='light infections')
-    plt.scatter(data_PCA[idxc2,0],data_PCA[idxc2,1],s=80,c='y', marker='o',linewidths = 0, label='severe infections')
+    plt.scatter(data_PCA[idxc1,0],data_PCA[idxc1,1],s=80,c='r', marker='^',linewidths = 0, label='healthy')
+    plt.scatter(data_PCA[idxc2,0],data_PCA[idxc2,1],s=80,c='y', marker='o',linewidths = 0, label='infected')
     plt.gca().axes.get_xaxis().set_ticks([])
     plt.gca().axes.get_yaxis().set_ticks([])
     plt.title('PCA of the codes')
@@ -70,14 +70,14 @@ def interp_data(X, X_len, restore=False, interp_kind='linear'):
     return X_new
 
 
-def classify_with_knn(train_data, train_labels, test_data, test_labels, k=3):
+def classify_with_knn(train_data, train_labels, test_data, test_labels, k=3, metric='minkowski'):
     """
     Perform classification with knn.
     """
     from sklearn.neighbors import KNeighborsClassifier
     from sklearn.metrics import f1_score, roc_auc_score
 
-    neigh = KNeighborsClassifier(n_neighbors=k)
+    neigh = KNeighborsClassifier(n_neighbors=k, metric=metric)
     neigh.fit(train_data, train_labels)
     accuracy = neigh.score(test_data, test_labels)
     pred_labels = neigh.predict(test_data)
