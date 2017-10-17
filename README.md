@@ -38,6 +38,7 @@ For example, we get the following classification results on the test set:
 ACC: 0.86932, F1: 0.7013, AUC: 0.77809
 ```
 A visualization of *K_tete* is also returned.
+
 <img src="./imgs/tck_kernel.png" width="200" height="200">
 
 We can see that the matrix has a block structure: the first larger block on the diagonal are the similarities between MTS of class 1, the second smaller block is relative to the elements of class 2.
