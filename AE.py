@@ -7,11 +7,11 @@ import matplotlib.pyplot as plt
 from utils import classify_with_knn, interp_data, mse_and_corr, dim_reduction_plot
 import math
 
-dim_red = 1
-plot_on = 1
-interp_on = 0
-tied_weights = 0
-lin_dec = 1
+dim_red = 1 # perform PCA on the codes and plot the first two components
+plot_on = 1 # plot the results, otherwise only textual output is returned
+interp_on = 0 # interpolate data (needed if the input time series have different length)
+tied_weights = 0 # train an AE where the decoder weights are the econder weights transposed
+lin_dec = 1 # train an AE with linear activations in the decoder
 
 # parse input data
 parser = argparse.ArgumentParser()
@@ -31,7 +31,7 @@ print(args)
         valid_data, _, valid_len, _, K_vs,
         test_data_orig, test_labels, test_len, _, K_ts) = getBlood(kernel='TCK', inp='zero') # data shape is [T, N, V] = [time_steps, num_elements, num_var]
 
-# sort test data (for visualize the learned K)
+# sort test data (for a better visualization of the inner product of the codes)
 sort_idx = np.argsort(test_labels,axis=0)[:,0]
 test_data_orig = test_data_orig[:,sort_idx,:]
 test_labels = test_labels[sort_idx,:]
@@ -248,7 +248,7 @@ test_mse, test_corr = mse_and_corr(test_data, pred, test_len)
 print('Test MSE: %.3f\nTest Pearson correlation: %.3f'%(test_mse, test_corr))
 
 # kNN classification on the codes
-acc, f1, auc = classify_with_knn(tr_code, train_labels[:, 0], ts_code, test_labels[:, 0], k=3)
+acc, f1, auc = classify_with_knn(tr_code, train_labels[:, 0], ts_code, test_labels[:, 0], k=1)
 print('kNN -- acc: %.3f, F1: %.3f, AUC: %.3f'%(acc, f1, auc))
 
 # dim reduction plots
