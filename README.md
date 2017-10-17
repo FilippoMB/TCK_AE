@@ -99,7 +99,7 @@ The inner products of the codes is visualized and we can notice that the structu
 
 To have a visualization of the learned representations, we perform PCA and the codes and we plot the first two components. It is possible to see that the 2 classes are well separated
 
-<img src="./imgs/pca.png" width="250" height="200">
+<img src="./imgs/pca.png" width="300" height="250">
 
 The results returned are the reconstruction MSE and the Pearson correlation between encoder input and decoder output and the accuracy, F1 score and area under ROC curve of the *k*NN classifier with *k*=1
 ```python
