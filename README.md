@@ -1,5 +1,5 @@
 ### Deep Kernelized Auto Encoder with Time series Cluster Kernel 
-#### Learning compressed representations of blood samples time series with missing data
+#### Reference paper: [*Learning compressed representations of blood samples time series with missing data*](https://arxiv.org/abs/1710.07547)
 ------
 
 <img src="./imgs/kdAE_arch.png" width="250" height="200">
